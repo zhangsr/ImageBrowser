@@ -4,5 +4,8 @@
     <string name="app_name">ImageBrowser</string>
     <string name="action_settings">Settings</string>
     <string name="hello_world">Hello world!</string>
+    <string name="set_wallpaper">设置壁纸</string>
+    <string name="please_wait">请稍候</string>
+    <string name="delete">删除</string>
 
 </resources>

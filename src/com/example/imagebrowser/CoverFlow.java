@@ -190,8 +190,6 @@ public class CoverFlow extends Gallery {
 		final int imageWidth = child.getLayoutParams().width;
 		final int rotation = Math.abs(rotationAngle);
 
-		// 在Z轴上正向移动camera的视角，实际效果为放大图片。
-		// 如果在Y轴上移动，则图片上下移动；X轴上对应图片左右移动。
 		mCamera.translate(0.0f, 0.0f, 100.0f);
 
 		// As the angle of the view gets less, zoom in

@@ -33,51 +33,69 @@ import android.widget.AdapterView;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
-
+/**
+ * Improve Standard: ?
+ * Improves : 
+ * 	1.Multithread
+ * 	2.ConvertView cache (seems no effort)
+ * @author zsr
+ *
+ */
 public class ImageBrowserActivity extends Activity {
 	private static final String TAG = "ImageBrowserActivity";
+	private static final int DISMISS_PROGRESS_DIALOG = 0;
+	private final static String[] IMAGE_FILTER = new String[] {"jpeg", "jpg", "png", "gif", "bmp"};
+	
 	private List<String> mImgPaths = new ArrayList<String>();
 	private int mCurrentIndex;
 	private ImageAdapter mCoverImageAdapter;
 	private ProgressDialog mProgressDialog;
+	private CoverFlow mCoverFlow;
 	
-	private static final int DISMISS_PROGRESS_DIALOG = 0;
-	
-	private final static String[] IMAGE_FILTER = new String[] {"jpeg", "jpg", "png", "gif", "bmp"};
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		
-		//get image path
+		initImgPaths();
+		
+		initLayout();	//init coverflow
+		
+		setContentView(mCoverFlow);
+	}
+	
+	/**
+	 * Get image paths from intent, to show images in the same directory as the selected one.
+	 */
+	private void initImgPaths(){
 		String currentImgPath = getIntent().getData().getPath();
 		String currentImgName = currentImgPath.substring(currentImgPath.lastIndexOf('/') + 1);
 		String imgDir = currentImgPath.substring(0, currentImgPath.lastIndexOf('/') + 1);
 		File[] imgFiles = new File(imgDir).listFiles(new ImageFileNameFilter());
 		mCurrentIndex = getCurrentIndex(currentImgName, imgFiles);
-		
 		for(File f : imgFiles){
 			mImgPaths.add(imgDir + f.getName());
 		}
-		
-		CoverFlow coverFlow = new CoverFlow(this);
+	}
+	
+	/**
+	 * Init coverflow and adapter
+	 */
+	private void initLayout(){
+		mCoverFlow = new CoverFlow(this);
 		mCoverImageAdapter = new ImageAdapter(this, mImgPaths);
-		coverFlow.setAdapter(mCoverImageAdapter);
+		mCoverFlow.setAdapter(mCoverImageAdapter);
 		//set space between items
-		coverFlow.setSpacing(-50);
-		coverFlow.setSelection(mCurrentIndex, true);
-		coverFlow.setAnimationDuration(1000);
+		mCoverFlow.setSpacing(-50);
+		mCoverFlow.setSelection(mCurrentIndex, true);
+		mCoverFlow.setAnimationDuration(1000);
 		
-		setContentView(coverFlow);
-		
-		coverFlow.setOnItemSelectedListener(new OnItemSelectedListener(){
-
+		mCoverFlow.setOnItemSelectedListener(new OnItemSelectedListener(){
 			@Override
 			public void onItemSelected(AdapterView<?> arg0, View arg1,
 					int arg2, long arg3) {
 				mCurrentIndex = arg2;
 			}
-
 			@Override
 			public void onNothingSelected(AdapterView<?> arg0) {
 				
@@ -85,19 +103,18 @@ public class ImageBrowserActivity extends Activity {
 		});
 	}
 	
-	
-	
 	@Override
 	public boolean onCreateOptionsMenu(Menu menu) {
-		menu.add(Menu.NONE, Menu.FIRST, Menu.NONE, "删除");
-		menu.add(Menu.NONE, Menu.FIRST + 1, Menu.NONE, "设置壁纸");
+		menu.add(Menu.NONE, Menu.FIRST, Menu.NONE, getResources().getText(R.string.delete));
+		menu.add(Menu.NONE, Menu.FIRST + 1, Menu.NONE,
+				getResources().getText(R.string.set_wallpaper));
 		return true;
 	}
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item) {
 		switch(item.getItemId()){
-		case Menu.FIRST : {
+		case Menu.FIRST : {	//delete
 			File file = new File(mImgPaths.get(mCurrentIndex));
 			if(file.exists()){
 				file.delete();
@@ -105,14 +122,18 @@ public class ImageBrowserActivity extends Activity {
 			mImgPaths.remove(mCurrentIndex);
 			mCoverImageAdapter.notifyDataSetChanged();
 		};break;
-		case Menu.FIRST + 1 : {
-			final WallpaperManager wallpaperManager = (WallpaperManager) getSystemService(WALLPAPER_SERVICE);
-			mProgressDialog = ProgressDialog.show(this, "设置壁纸中", "请稍候", true, false);
+		case Menu.FIRST + 1 : {	//set wallpaper
+			final WallpaperManager wallpaperManager = 
+					(WallpaperManager) getSystemService(WALLPAPER_SERVICE);
+			mProgressDialog = ProgressDialog.show(this,
+					getResources().getText(R.string.set_wallpaper),
+					getResources().getText(R.string.please_wait), true, false);
 			new Thread(new Runnable() {
 				public void run() {
 					try {
-						wallpaperManager.setBitmap(BitmapFactory.decodeFile(mImgPaths.get(mCurrentIndex)));
-						handler.sendEmptyMessage(DISMISS_PROGRESS_DIALOG);
+						wallpaperManager.setBitmap(BitmapFactory.decodeFile(mImgPaths.get(
+								mCurrentIndex)));
+						mHandler.sendEmptyMessage(DISMISS_PROGRESS_DIALOG);
 					}
 					catch (IOException e) {
 						e.printStackTrace();
@@ -124,7 +145,7 @@ public class ImageBrowserActivity extends Activity {
 		return true;
 	}
 	
-	final Handler handler = new Handler() {
+	final Handler mHandler = new Handler() {
 		@Override
 		public void handleMessage(Message msg) {
 			if (msg.what == DISMISS_PROGRESS_DIALOG) {
