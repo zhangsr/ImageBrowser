@@ -6,11 +6,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.app.WallpaperManager;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
 import android.graphics.BitmapFactory;
@@ -30,6 +30,7 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
+import android.widget.AdapterView.OnItemClickListener;
 import android.widget.AdapterView.OnItemSelectedListener;
 import android.widget.BaseAdapter;
 import android.widget.ImageView;
@@ -100,6 +101,20 @@ public class ImageBrowserActivity extends Activity {
 			public void onNothingSelected(AdapterView<?> arg0) {
 				
 			}
+		});
+		
+		mCoverFlow.setOnItemClickListener(new OnItemClickListener(){
+
+			@Override
+			public void onItemClick(AdapterView<?> parent, View view,
+					int position, long id) {
+				mCurrentIndex = position;
+				Intent intent = new Intent();
+				intent.putExtra("image_path", mImgPaths.get(mCurrentIndex));
+				intent.setClass(ImageBrowserActivity.this, ImageDetailActivity.class);
+				startActivity(intent);
+			}
+			
 		});
 	}
 	
